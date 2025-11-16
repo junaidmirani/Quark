@@ -1,0 +1,6 @@
+*.db
+*.sqlite
+*.pyc
+__pycache__/
+myenv/
+node_modules/
