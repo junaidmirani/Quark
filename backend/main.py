@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from functools import lru_cache
 from datetime import datetime, timedelta
+from auth.auth_middleware import require_auth
 
 # Import auth system
 from auth.auth_routes import router as auth_router
@@ -28,6 +29,13 @@ from search_modules.bookmark_search import BookmarkSearchModule
 from search_modules.slack_search import SlackSearchModule
 
 app = FastAPI(title="Quark API", version="2.0.0")
+
+from dotenv import load_dotenv
+load_dotenv()
+
+# Update these lines:
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 # ✅ FULL WORKING CORS CONFIG
 origins = [
@@ -370,14 +378,15 @@ GOOGLE_CLIENT_ID = "396804387135-sak8ueujt310gs9if8cv6374cakaoh0k.apps.googleuse
 GOOGLE_CLIENT_SECRET = "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"
 
 # main.py - Update OAuth callbacks to get user from state
-
+# Replace the gmail_oauth_callback in main.py with this fixed version
 
 @app.get("/oauth/gmail/callback")
 async def gmail_oauth_callback(code: str, state: Optional[str] = None):
-    """Handle Gmail OAuth callback"""
+    """Handle Gmail OAuth callback - FIXED VERSION"""
     try:
         # Decode the user token from state
         if not state:
+            print("❌ No state parameter in callback")
             return RedirectResponse(
                 url='http://localhost:3000/sources?error=missing_auth_state'
             )
@@ -387,11 +396,13 @@ async def gmail_oauth_callback(code: str, state: Optional[str] = None):
         payload = verify_token(state)
 
         if not payload:
+            print("❌ Invalid auth token in state")
             return RedirectResponse(
                 url='http://localhost:3000/sources?error=invalid_auth_token'
             )
 
         user_id = payload.get("sub")
+        print(f"🔐 Processing Gmail OAuth for user: {user_id}")
 
         # Exchange code for tokens
         async with httpx.AsyncClient() as client:
@@ -410,23 +421,47 @@ async def gmail_oauth_callback(code: str, state: Optional[str] = None):
                 tokens = token_response.json()
                 access_token = tokens.get('access_token')
                 refresh_token = tokens.get('refresh_token')
+                
+                print(f"✅ Got tokens:")
+                print(f"   - Access token: {access_token[:20]}..." if access_token else "   - No access token!")
+                print(f"   - Refresh token: {refresh_token[:20]}..." if refresh_token else "   - No refresh token!")
 
-                # Store credentials
+                # Store credentials with both tokens
                 store_user_credential(user_id, "gmail", {
                     'access_token': access_token,
                     'refresh_token': refresh_token,
-                    'type': 'oauth'
+                    'type': 'oauth',
+                    'token_type': tokens.get('token_type', 'Bearer'),
+                    'expires_in': tokens.get('expires_in')
                 })
 
                 print(f"✅ Gmail connected for user {user_id}")
+                
+                # Verify the connection works
+                try:
+                    from search_modules.gmail_search import GmailSearchModule
+                    gmail_module = GmailSearchModule(user_credentials={
+                        'access_token': access_token,
+                        'refresh_token': refresh_token
+                    })
+                    
+                    if gmail_module.service:
+                        profile = gmail_module.service.users().getProfile(userId='me').execute()
+                        print(f"✅ Gmail verified: {profile.get('emailAddress')} ({profile.get('messagesTotal')} messages)")
+                    else:
+                        print("⚠️ Gmail service not initialized")
+                except Exception as e:
+                    print(f"⚠️ Gmail verification failed: {e}")
 
                 return RedirectResponse(
                     url=f'http://localhost:3000/sources?gmail_connected=true'
                 )
             else:
-                print(f"❌ Token exchange failed: {token_response.text}")
+                error_data = token_response.json()
+                print(f"❌ Token exchange failed: {token_response.status_code}")
+                print(f"   Error: {error_data}")
                 return RedirectResponse(
-                    url='http://localhost:3000/sources?error=gmail_token_exchange_failed'
+                    url=f'http://localhost:3000/sources?error=gmail_token_exchange_failed'
                 )
 
     except Exception as e:
@@ -436,7 +471,6 @@ async def gmail_oauth_callback(code: str, state: Optional[str] = None):
         return RedirectResponse(
             url=f'http://localhost:3000/sources?error=gmail_auth_failed'
         )
-
 
 @app.get("/oauth/drive/callback")
 async def drive_oauth_callback(code: str, state: Optional[str] = None):
@@ -496,7 +530,82 @@ async def drive_oauth_callback(code: str, state: Optional[str] = None):
             url='http://localhost:3000/sources?error=drive_auth_failed'
         )
 
+# Add this debug endpoint to main.py to test Gmail connection
 
+@app.get("/debug/gmail/{user_id}")
+async def debug_gmail_connection(user_id: str):
+    """Debug endpoint to test Gmail connection"""
+    try:
+        # Get user credentials
+        from user_credentials import get_user_credential
+        gmail_creds = get_user_credential(user_id, "gmail")
+        
+        if not gmail_creds:
+            return {"error": "No Gmail credentials found for user"}
+        
+        # Try to create Gmail module
+        from search_modules.gmail_search import GmailSearchModule
+        gmail_module = GmailSearchModule(user_credentials=gmail_creds)
+        
+        # Check if service initialized
+        if not gmail_module.service:
+            return {
+                "error": "Gmail service not initialized",
+                "credentials": {
+                    "has_access_token": "access_token" in gmail_creds,
+                    "has_refresh_token": "refresh_token" in gmail_creds
+                }
+            }
+        
+        # Try to get profile
+        try:
+            from googleapiclient.discovery import build
+            service = gmail_module.service
+            profile = service.users().getProfile(userId='me').execute()
+            
+            return {
+                "status": "success",
+                "email": profile.get('emailAddress'),
+                "total_messages": profile.get('messagesTotal'),
+                "credentials_stored": True,
+                "service_initialized": True
+            }
+        except Exception as e:
+            return {
+                "error": "Gmail API call failed",
+                "message": str(e),
+                "service_initialized": gmail_module.service is not None
+            }
+            
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@app.get("/debug/credentials")
+async def debug_credentials(current_user: User = Depends(require_auth)):
+    """Debug: Show what credentials are stored"""
+    from user_credentials import user_credentials_db, get_user_connected_services
+    
+    services = get_user_connected_services(current_user.id)
+    creds = user_credentials_db.get(current_user.id, {})
+    
+    # Mask tokens for security
+    masked_creds = {}
+    for service, cred in creds.items():
+        masked_creds[service] = {
+            key: f"{val[:10]}..." if isinstance(val, str) and len(val) > 10 else val
+            for key, val in cred.items()
+        }
+    
+    return {
+        "user_id": current_user.id,
+        "connected_services": services,
+        "credentials": masked_creds
+    }
 # ///////////////////////////
 if __name__ == "__main__":
     import uvicorn

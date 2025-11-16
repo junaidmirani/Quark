@@ -12,9 +12,14 @@ import {
   Clock,
   Database,
 } from "lucide-react";
+
 import SearchBar from "./components/SearchBar";
 import SettingsModal from "./components/SettingsModal";
 import SidebarToggle from "./components/SidebarToggle";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import LandingPage from './components/LandingPage';
+import LoginModal from './components/LoginModal';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const API_BASE_URL = "http://localhost:8000";
 const GOOGLE_CLIENT_ID =
@@ -300,32 +305,32 @@ const SourcesPage = () => {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(null);
 
-  useEffect(() => {
+useEffect(() => {
+  loadSources();
+
+  const params = new URLSearchParams(window.location.search);
+  const gmailConnected = params.get("gmail_connected");
+  const driveConnected = params.get("drive_connected");
+  const error = params.get("error");
+
+  // 🔥 FIX: Show success message
+  if (gmailConnected === "true") {
+    alert("✅ Gmail connected successfully!");
+    loadSources(); // Reload to show updated status
+    window.history.replaceState({}, "", "/sources");
+  }
+
+  if (driveConnected === "true") {
+    alert("✅ Google Drive connected successfully!");
     loadSources();
+    window.history.replaceState({}, "", "/sources");
+  }
 
-    // Check for OAuth callback with token
-    const params = new URLSearchParams(window.location.search);
-    const gmailConnected = params.get("gmail_connected");
-    const driveConnected = params.get("drive_connected");
-    const token = params.get("token");
-    const error = params.get("error");
-
-    if (gmailConnected && token) {
-      saveGmailConnection(token);
-      // Clean URL
-      window.history.replaceState({}, "", "/sources");
-    }
-
-    if (driveConnected && token) {
-      saveDriveConnection(token);
-      window.history.replaceState({}, "", "/sources");
-    }
-
-    if (error) {
-      alert(`❌ Connection failed: ${error}`);
-      window.history.replaceState({}, "", "/sources");
-    }
-  }, []); // ← Single closing for useEffect
+  if (error) {
+    alert(`❌ Connection failed: ${error}`);
+    window.history.replaceState({}, "", "/sources");
+  }
+}, []);
 
   const loadSources = async () => {
     try {
@@ -512,24 +517,27 @@ const SourcesPage = () => {
   //   }, 500);
   // };
   const handleConnectDrive = async () => {
-    setConnecting("drive");
+  setConnecting("drive");
+  
+  const clientId = "396804387135-sak8ueujt310gs9if8cv6374cakaoh0k.apps.googleusercontent.com";
+  const redirectUri = "http://localhost:8000/oauth/drive/callback";
+  const scope = "https://www.googleapis.com/auth/drive.readonly";
+  
+  // 🔥 FIX: Include auth token in state parameter (was missing!)
+  const state = localStorage.getItem("auth_token");
 
-    const clientId =
-      "396804387135-sak8ueujt310gs9if8cv6374cakaoh0k.apps.googleusercontent.com";
-    const redirectUri = "http://localhost:8000/oauth/drive/callback";
-    const scope = "https://www.googleapis.com/auth/drive.readonly";
+  const authUrl =
+    `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${clientId}&` +
+    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+    `response_type=code&` +
+    `scope=${encodeURIComponent(scope)}&` +
+    `access_type=offline&` +
+    `state=${encodeURIComponent(state)}&` +  // 🔥 ADDED THIS LINE
+    `prompt=consent`;
 
-    const authUrl =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `response_type=code&` +
-      `scope=${encodeURIComponent(scope)}&` +
-      `access_type=offline&` +
-      `prompt=consent`;
-
-    window.location.href = authUrl;
-  };
+  window.location.href = authUrl;
+};
   const saveDriveConnection = async (accessToken) => {
     try {
       await apiCall("/connect/drive", {
@@ -814,17 +822,101 @@ const SourcesPage = () => {
     );
   }
 
+  // return (
+  //   <div
+  //     style={{
+  //       flex: 1,
+  //       overflow: "auto",
+  //       backgroundColor: darkMode ? "#202123" : "#F9FAFB",
+  //       padding: "32px",
+  //     }}
+  //   >
+  //     <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+  //       <div style={{ marginBottom: "32px" }}>
+  //         <h1
+  //           style={{
+  //             fontSize: "32px",
+  //             fontWeight: "700",
+  //             color: darkMode ? "#E4E4E7" : "#111827",
+  //             marginBottom: "8px",
+  //           }}
+  //         >
+  //           Connect Sources
+  //         </h1>
+  //         <p
+  //           style={{
+  //             color: darkMode ? "#A1A1AA" : "#6B7280",
+  //             fontSize: "16px",
+  //             marginBottom: "24px",
+  //           }}
+  //         >
+  //           Connect your apps to search across all your content in one place
+  //         </p>
+
+
+  //       </div>
+
+  //       <div
+  //         style={{
+  //           display: "grid",
+  //           gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+  //           gap: "24px",
+  //         }}
+  //       >
+  //         {sources.map((source) => (
+  //           <SourceCard key={source.name} source={source} />
+  //         ))}
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
+    if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "400px",
+          color: darkMode ? "#A1A1AA" : "#6B7280",
+        }}
+      >
+        <div
+          style={{
+            width: "32px",
+            height: "32px",
+            border: `3px solid ${darkMode ? "#3F3F46" : "#F3F4F6"}`,
+            borderTop: "3px solid #3B82F6",
+            borderRadius: "50%",
+            animation: "spin 1s linear infinite",
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
+    // 🔥 NEW: Main container with flex column
     <div
       style={{
         flex: 1,
-        overflow: "auto",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        overflow: "hidden", // Prevent this container from scrolling
         backgroundColor: darkMode ? "#202123" : "#F9FAFB",
-        padding: "32px",
       }}
     >
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <div style={{ marginBottom: "32px" }}>
+      {/* 🔥 FIXED HEADER: Title + description - Won't scroll */}
+      <div
+        style={{
+          flexShrink: 0, // Won't shrink
+          padding: "32px 32px 24px",
+          borderBottom: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
+          backgroundColor: darkMode ? "#202123" : "#F9FAFB",
+        }}
+      >
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           <h1
             style={{
               fontSize: "32px",
@@ -839,12 +931,13 @@ const SourcesPage = () => {
             style={{
               color: darkMode ? "#A1A1AA" : "#6B7280",
               fontSize: "16px",
-              marginBottom: "24px",
+              marginBottom: "16px",
             }}
           >
             Connect your apps to search across all your content in one place
           </p>
 
+          {/* Info banner */}
           <div
             style={{
               padding: "16px",
@@ -853,7 +946,6 @@ const SourcesPage = () => {
               display: "flex",
               alignItems: "flex-start",
               gap: "12px",
-              marginBottom: "24px",
             }}
           >
             <span style={{ fontSize: "20px" }}>💡</span>
@@ -873,17 +965,28 @@ const SourcesPage = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: "24px",
-          }}
-        >
-          {sources.map((source) => (
-            <SourceCard key={source.name} source={source} />
-          ))}
+      {/* 🔥 SCROLLABLE SOURCES GRID - Only this part scrolls */}
+      <div
+        style={{
+          flex: 1, // Takes remaining space
+          overflow: "auto", // 🔥 THIS IS THE MAGIC - Only this scrolls!
+          padding: "32px",
+        }}
+      >
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gap: "24px",
+            }}
+          >
+            {sources.map((source) => (
+              <SourceCard key={source.name} source={source} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -1105,177 +1208,279 @@ const SearchInterface = ({ openSettings }) => {
     );
   };
 
-  return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      {/* <div
-        style={{
-          padding: "24px",
-          borderBottom: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
-          backgroundColor: darkMode ? "#27272A" : "white",
-        }}
-      >
-        <div style={{ position: "relative", marginBottom: "16px" }}>
-          <Search
-            size={20}
-            style={{
-              position: "absolute",
-              left: "16px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: darkMode ? "#71717A" : "#9CA3AF",
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Search across all your apps and files..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            style={{
-              width: "100%",
-              paddingLeft: "48px",
-              paddingRight: "16px",
-              paddingTop: "14px",
-              paddingBottom: "14px",
-              border: `2px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
-              borderRadius: "12px",
-              fontSize: "16px",
-              outline: "none",
-              transition: "all 0.2s",
-              backgroundColor: darkMode ? "#202123" : "white",
-              color: darkMode ? "#E4E4E7" : "#111827",
-            }}
-          />
-        </div>
+  // return (
+  //   <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%",overflow: "hidden" }}>
+  //     {/* --- START: Replace previous search header with SearchBar --- */}
+  //     <div
+  //       style={{
+  //         flexShrink: 0,
+  //         padding: "0 20px 6px 20px",
+  //         borderBottom: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
+  //         backgroundColor: darkMode ? "#27272A" : "white",
+  //       }}
+  //     >
+  //       <SearchBar
+  //         value={query}
+  //         onChange={setQuery}
+  //         onOpenSettings={openSettings} // you will lift state into parent; see step D
+  //         placeholder="Search across all your apps and files..."
+  //       />
 
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "14px",
-              color: darkMode ? "#A1A1AA" : "#6B7280",
-              fontWeight: "500",
-            }}
-          >
-            Search in:
-          </span>
-          {availableSources.map((source) => (
-            <button
-              key={source.name}
-              onClick={() => toggleSource(source.name)}
-              style={{
-                padding: "6px 12px",
-                border: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                backgroundColor: selectedSources.includes(source.name)
-                  ? "#3B82F6"
-                  : darkMode
-                  ? "#27272A"
-                  : "white",
-                color: selectedSources.includes(source.name)
-                  ? "white"
-                  : darkMode
-                  ? "#E4E4E7"
-                  : "#374151",
-              }}
-            >
-              {source.display_name}
-              {source.connected && (
-                <span style={{ marginLeft: "4px", opacity: 0.7 }}>
-                  ({source.total_items})
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div> */}
-      {/* --- START: Replace previous search header with SearchBar --- */}
+  //       <div
+  //         style={{
+  //           display: "flex",
+  //           gap: "8px",
+  //           flexWrap: "wrap",
+  //           alignItems: "center",
+  //           padding: "0 6px 12px 6px",
+  //         }}
+  //       >
+  //         {/* Keep the existing "Search in:" source toggles here */}
+  //         <span
+  //           style={{
+  //             fontSize: 14,
+  //             color: darkMode ? "#A1A1AA" : "#6B7280",
+  //             fontWeight: 500,
+  //           }}
+  //         >
+  //           Search in:
+  //         </span>
+  //         {availableSources.map((source) => (
+  //           <button
+  //             key={source.name}
+  //             onClick={() => toggleSource(source.name)}
+  //             style={{
+  //               padding: "6px 12px",
+  //               border: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
+  //               borderRadius: "20px",
+  //               fontSize: "12px",
+  //               fontWeight: "500",
+  //               cursor: "pointer",
+  //               transition: "all 0.2s",
+  //               backgroundColor: selectedSources.includes(source.name)
+  //                 ? "#3B82F6"
+  //                 : darkMode
+  //                 ? "#27272A"
+  //                 : "white",
+  //               color: selectedSources.includes(source.name)
+  //                 ? "white"
+  //                 : darkMode
+  //                 ? "#E4E4E7"
+  //                 : "#374151",
+  //             }}
+  //           >
+  //             {source.display_name}
+  //             {source.connected && (
+  //               <span style={{ marginLeft: 4, opacity: 0.75 }}>
+  //                 ({source.total_items})
+  //               </span>
+  //             )}
+  //           </button>
+  //         ))}
+  //       </div>
+  //     </div>
+  //     {/* --- END: SearchBar replacement --- */}
+
+  //     <div
+  //       style={{
+  //         flex: 1,
+  //         overflow: "auto",
+  //         backgroundColor: darkMode ? "#202123" : "#F9FAFB",
+  //         padding: "24px",
+  //       }}
+  //     >
+  //       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+  //         {searchStats && (
+  //           <div
+  //             style={{
+  //               marginBottom: "20px",
+  //               fontSize: "14px",
+  //               color: darkMode ? "#A1A1AA" : "#6B7280",
+  //             }}
+  //           >
+  //             <span>
+  //               {searchStats.totalResults} results found in{" "}
+  //               {searchStats.searchTimeMs}ms
+  //             </span>
+  //             <span style={{ marginLeft: "16px" }}>
+  //               Searched: {searchStats.sourcesSearched.join(", ")}
+  //             </span>
+  //           </div>
+  //         )}
+
+  //         {isSearching && (
+  //           <div
+  //             style={{
+  //               display: "flex",
+  //               alignItems: "center",
+  //               justifyContent: "center",
+  //               padding: "40px",
+  //             }}
+  //           >
+  //             <div
+  //               style={{
+  //                 width: "32px",
+  //                 height: "32px",
+  //                 border: "3px solid #3F3F46",
+  //                 borderTop: "3px solid #3B82F6",
+  //                 borderRadius: "50%",
+  //                 animation: "spin 1s linear infinite",
+  //               }}
+  //             />
+  //           </div>
+  //         )}
+
+  //         {!isSearching &&
+  //           results.length > 0 &&
+  //           results.map((result) => (
+  //             <SearchResultItem key={result.id} result={result} />
+  //           ))}
+
+  //         {!isSearching && query && results.length === 0 && (
+  //           <div
+  //             style={{
+  //               textAlign: "center",
+  //               padding: "60px 20px",
+  //               color: darkMode ? "#A1A1AA" : "#6B7280",
+  //             }}
+  //           >
+  //             <Search
+  //               size={48}
+  //               style={{ marginBottom: "16px", opacity: 0.5 }}
+  //             />
+  //             <h3 style={{ fontSize: "18px", marginBottom: "8px" }}>
+  //               No results found for "{query}"
+  //             </h3>
+  //           </div>
+  //         )}
+
+  //         {!query && (
+  //           <div
+  //             style={{
+  //               textAlign: "center",
+  //               padding: "60px 20px",
+  //               color: darkMode ? "#A1A1AA" : "#6B7280",
+  //             }}
+  //           >
+  //             <Search
+  //               size={64}
+  //               style={{ marginBottom: "24px", opacity: 0.3 }}
+  //             />
+  //             <h2
+  //               style={{
+  //                 fontSize: "24px",
+  //                 fontWeight: "600",
+  //                 marginBottom: "12px",
+  //                 color: darkMode ? "#E4E4E7" : "#111827",
+  //               }}
+  //             >
+  //               Quark Search
+  //             </h2>
+  //             <p style={{ fontSize: "16px" }}>
+  //               Search across all your connected apps and files in one place.
+  //             </p>
+  //             <p style={{ fontSize: "14px", marginTop: "8px" }}>
+  //               Try searching for: "project", "analytics", "meeting notes"
+  //             </p>
+  //           </div>
+  //         )}
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
+    return (
+    // 🔥 NEW: Main container with flex column
+    <div style={{ 
+      flex: 1, 
+      display: "flex", 
+      flexDirection: "column",
+      height: "100%",
+      overflow: "hidden" // Prevent this container from scrolling
+    }}>
+      
+      {/* 🔥 FIXED HEADER: Search bar + filters - Won't scroll */}
       <div
         style={{
-          padding: "0 20px 6px 20px",
+          flexShrink: 0, // Won't shrink
           borderBottom: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
           backgroundColor: darkMode ? "#27272A" : "white",
         }}
       >
-        <SearchBar
-          value={query}
-          onChange={setQuery}
-          onOpenSettings={openSettings} // you will lift state into parent; see step D
-          placeholder="Search across all your apps and files..."
-        />
+        {/* Search Bar */}
+        <div style={{ padding: "0 20px 6px 20px" }}>
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onOpenSettings={openSettings}
+            placeholder="Search across all your apps and files..."
+          />
 
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-            alignItems: "center",
-            padding: "0 6px 12px 6px",
-          }}
-        >
-          {/* Keep the existing "Search in:" source toggles here */}
-          <span
+          {/* Source filters */}
+          <div
             style={{
-              fontSize: 14,
-              color: darkMode ? "#A1A1AA" : "#6B7280",
-              fontWeight: 500,
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+              alignItems: "center",
+              padding: "0 6px 12px 6px",
             }}
           >
-            Search in:
-          </span>
-          {availableSources.map((source) => (
-            <button
-              key={source.name}
-              onClick={() => toggleSource(source.name)}
+            <span
               style={{
-                padding: "6px 12px",
-                border: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "500",
-                cursor: "pointer",
-                backgroundColor: selectedSources.includes(source.name)
-                  ? "#3B82F6"
-                  : darkMode
-                  ? "#27272A"
-                  : "white",
-                color: selectedSources.includes(source.name)
-                  ? "white"
-                  : darkMode
-                  ? "#E4E4E7"
-                  : "#374151",
+                fontSize: 14,
+                color: darkMode ? "#A1A1AA" : "#6B7280",
+                fontWeight: 500,
               }}
             >
-              {source.display_name}
-              {source.connected && (
-                <span style={{ marginLeft: 4, opacity: 0.75 }}>
-                  ({source.total_items})
-                </span>
-              )}
-            </button>
-          ))}
+              Search in:
+            </span>
+            {availableSources.map((source) => (
+              <button
+                key={source.name}
+                onClick={() => toggleSource(source.name)}
+                style={{
+                  padding: "6px 12px",
+                  border: `1px solid ${darkMode ? "#3F3F46" : "#E5E7EB"}`,
+                  borderRadius: "20px",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  backgroundColor: selectedSources.includes(source.name)
+                    ? "#3B82F6"
+                    : darkMode
+                    ? "#27272A"
+                    : "white",
+                  color: selectedSources.includes(source.name)
+                    ? "white"
+                    : darkMode
+                    ? "#E4E4E7"
+                    : "#374151",
+                }}
+              >
+                {source.display_name}
+                {source.connected && (
+                  <span style={{ marginLeft: 4, opacity: 0.75 }}>
+                    ({source.total_items})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      {/* --- END: SearchBar replacement --- */}
 
+      {/* 🔥 SCROLLABLE RESULTS AREA - Only this part scrolls */}
       <div
         style={{
-          flex: 1,
-          overflow: "auto",
+          flex: 1, // Takes remaining space
+          overflow: "auto", // 🔥 THIS IS THE MAGIC - Only this scrolls!
           backgroundColor: darkMode ? "#202123" : "#F9FAFB",
           padding: "24px",
         }}
       >
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          {/* Search stats */}
           {searchStats && (
             <div
               style={{
@@ -1294,6 +1499,7 @@ const SearchInterface = ({ openSettings }) => {
             </div>
           )}
 
+          {/* Loading state */}
           {isSearching && (
             <div
               style={{
@@ -1316,12 +1522,14 @@ const SearchInterface = ({ openSettings }) => {
             </div>
           )}
 
+          {/* Results */}
           {!isSearching &&
             results.length > 0 &&
             results.map((result) => (
               <SearchResultItem key={result.id} result={result} />
             ))}
 
+          {/* No results */}
           {!isSearching && query && results.length === 0 && (
             <div
               style={{
@@ -1340,6 +1548,7 @@ const SearchInterface = ({ openSettings }) => {
             </div>
           )}
 
+          {/* Empty state */}
           {!query && (
             <div
               style={{
@@ -1526,6 +1735,8 @@ const App = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const navigate = useNavigate(); // Only if inside Router
 
   useEffect(() => {
     const style = document.createElement("style");
@@ -1594,6 +1805,7 @@ const App = () => {
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         backgroundColor: darkMode ? "#202123" : "#F9FAFB",
+        overflow: "hidden",
       }}
     >
       <div
@@ -1604,6 +1816,7 @@ const App = () => {
           display: "flex",
           flexDirection: "column",
           padding: "24px 0",
+          flexShrink: 0, 
         }}
       >
         <div style={{ padding: "0 24px", marginBottom: "32px" }}>
@@ -1678,7 +1891,7 @@ const App = () => {
         </div>
       </div>
 
-      <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", }}>
         {renderPage()}
       </main>
       <SettingsModal
@@ -1691,11 +1904,64 @@ const App = () => {
     </div>
   );
 };
+const AppRoutes = () => {
+  const { user, loading, isAuthenticated, login } = useAuth();
+  const { darkMode } = useTheme();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
+  const handleLoginSuccess = (token, userData) => {
+    login(token, userData);
+    setIsLoginModalOpen(false);
+  };
+
+  return (
+    <>
+      <Routes>
+        {/* Landing Page - Public Route */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/app" replace />
+            ) : (
+              <LandingPage
+                onSignIn={() => setIsLoginModalOpen(true)}
+                darkMode={darkMode}
+              />
+            )
+          }
+        />
+
+        {/* Main App - Protected Route */}
+        <Route
+          path="/app"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated} loading={loading}>
+              <App />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Redirect any unknown routes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={handleLoginSuccess}
+        darkMode={darkMode}
+      />
+    </>
+  );
+};
 const RootApp = () => (
   <ThemeProvider>
     <AuthProvider>
-      <App />
+      <Router>
+        <AppRoutes />
+      </Router>
     </AuthProvider>
   </ThemeProvider>
 );
