@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Name - Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --secondary-text: #666666;
+            --border-color: #e0e0e0;
+            --hover-bg: #f5f5f5;
+            --accent-color: #2563eb;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0a0a0a;
+            --text-color: #e0e0e0;
+            --secondary-text: #a0a0a0;
+            --border-color: #2a2a2a;
+            --hover-bg: #1a1a1a;
+            --accent-color: #60a5fa;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .ascii-art {
+            font-size: 4px;
+            line-height: 4px;
+            overflow-x: auto;
+            margin-bottom: 30px;
+            color: var(--secondary-text);
+            white-space: pre;
+        }
+
+        header {
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--secondary-text);
+            margin-bottom: 5px;
+        }
+
+        .status {
+            color: var(--accent-color);
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        .bio {
+            margin-bottom: 20px;
+        }
+
+        .reading {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .work-item, .project-item {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .work-item:hover, .project-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .item-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .item-title a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .item-title a:hover {
+            text-decoration: underline;
+        }
+
+        .item-role {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+
+        .item-date {
+            color: var(--secondary-text);
+            font-size: 13px;
+        }
+
+        .item-description {
+            color: var(--secondary-text);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: var(--secondary-text);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .ascii-art {
+                font-size: 2px;
+                line-height: 2px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            h2 {
+                font-size: 18px;
+            }
+
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span id="theme-icon">🌙</span>
+    </button>
+
+    <div class="ascii-art">
+.--++---++++--..  .-+-.   -####-    -+++++++++-.    +###-.   .+#+++   -+++-.---+++-.   -+###-  .  -#+++- .-+.  --.  .-+.  .++###+.   .-###++.  .-+###-.  -  ..   ..  -  -++##-..--.+###+- -++++#+#+.  -.  -  .  .++##+- .+####+.  -+++++-##.  -+-.  -.. ++###+..  .  -######-.  -+++++-++  -#-  ..  -  -++##+.  .  .-######-..----#+++++--  .#.  ..  -.  ..-++###-.   -+#####--.  --+++++++ .  -  .--  --  --++++#+###+.  .  -######-.  ..++++++---  .  .  ..  .-+-+++++#++###-  .  -+######-  .-++++++-.+.  .  .  .  ..  .++###-.  .  .  -######+..--..-+++++++- +  -  ..  -  ...  .---++###-  .  .-######-..-. .  -+++++-..  .-.  ..  -  ...  .--..-+++++#+###-..  -######+-  -.  -+++.-  -  +.  ..  -+++++++++########+-  .  . .-######+..  -+.  .--  .  -  ..   ++++#########+---..-. ..-+######-  .+##--  ..  .  .   +#######+---..  .  ..---######--.  --+###-.  ..    -##----...  .  .  .  .-+#######-.   .-++++###+..  .-   .-......-+-..  .  .  .  .-+########++...  .-++++++#-  --  ..  .-----...---.   .  ..--#########+-..  ..-+##++++++++-.-. ..  ..  ...---.  ...---..  .---##########--.  .  ..-+++++-++++#+.  .-.. -  ..  --.-.-.---.-  ..-.-+-###########--..  .  .--+++++---+++##+.  ..----....-  .  -----. --.  ..-###########+-.  .  . --++++++- .-+++##-..  ....-###.-  .  -.  ...-#######-.  .  .  -++++++--  .+++###-  -+#.  -  .  ..  ...----  .  .--+#-+.  .  .  .  .-+++++++- .-+++###-..  ---.  -.  .  .-....--. ..  -  .  --  --.###+-.-----#+++++-+  .-++####+---.  ..  .  ..-----.  ..---..  .-.---.-+.-###-.+#+-#######+........-+####+.  ..  .  .--.  --....  ..-.--.-+-+.  .-####++######++++-++++++###-.--..  ...  .  .-----...--....----.-+--+---  -#######--++-.--+-.#####-...--  ..  .  .  .-.  .-.-+#++#+--.-+--+---.  ..  .-----.  -.-  ---+---..-. ..  .  -.  -#######--###-.---.  .  ..-.  .  .-----++..  -.  .  -##############.  -.--..  -  .+--++++++++- -  .  -  .################-.--..-+.  ..  -  -+##+++++++++++ -.  --  .###################.-  -...+.  .---  ++#+##++++++#+++-  ...  -.  -#####################-  -....+-  ..........-.-+++++++++++++##+++-  -  ..  .+########################.  -.....+.  ..  ++++++++++++++++##+++.  ..  .  ..  -+##########################+  ......-+  .-++-.-+#++++++++++++++++##++#+#.  .  .  .  -#+++##########################-  .-.....--  ##++#++#+++++++++++####+#++-.  .  -  -  -#++++###########################+.  .-.....-+.  .  .+##+++#++#++++++++++#########-+-.  -  -  .#+++++++###########################+.  .-...-  ..--+---#+++#++#++++++++++###+##+------+-.  --  .  .##++++++++###########################++  -.--  .  .---+#+++#+##+++++++++#####+#+----------.  --  ..  +#++++++++++#############+###############+  -.-.  .  ----#++++###+++++++++###+#--##-----------+-.  .#-  .#+++++++++++++####+++++++##+###############+  ...+  ..  +--+#++++##++++++++####+---+-+---------------+#+-  +++++++++++++++++++++++#####################++-  ...-  .-  .---#+++++##+++++++#####----+--+---------######-+#.  .++++++++++++#########+++###################+--+---.  .  +---#+++++#+++++++###++#---++--+++------+########++.  ++++++++#+++++++++++++############+++#####+#+---+  +---+++++##++++++##+-###----+---++#+-+############.  #+++++#++++++++++++++++++++#######++++++++++#+---+.  -+--+#+++++#+++++##++--+------+---+#############.  .#+++##++++++++++++++++++++++++#######++++++++#+-----  +---++++++##++##+#-##+--------+#----+########.  .++###+++++++++++++++++++++++++#########+++++++++----+  .+---#+++++#++#+##+-##+---------##++++#####+  .+##++++++++++++++++++++++++++++##########+++++++#----+-  .+---##++++#++#++#+-+###----------+########+  -##+++++++++++++++++++++++++++++############++++++#-----+  +----#+++++##++++#+-+###++--------+--+####+  -##+++++++++++++++++++++++++++++############+++++++++----+-  +----##++++##++++##+-####+#----+##########-  +#+++++++++++++++++++++++##++++++++++########+++++++++-----+  -----###++##++++++#+#-+#######+--########.  #++++++++++++++++++++++++++#######++++++#######++###++++------  .+---+##+##++++++++#++#+#################-  #++++++++++++++++++++++++++++++##############+#########++-----+.  +---+#####+++++++++##++##################+  #+++++++++++++++++++++++++++++++++++++++++################+------  -----####+++++++++++###+###################  #++++++++++++++++++++++++++++++++++###########################+----..+#######++++++++++++######################+  +++++++++++++++++++++++++++++++++###############################---+-####+##+++#++++++++++#####################+#.  +++++++++++++++++++++++++++++++++++++####+###########+++##########++####+###++##+++++++++++###################++++  ++++++++++++++++++++++++++++++++++++#+###+++#++#+++++#+++##############+###+++##++++++++++++###################++++.  +++++#+++++++++++++++++++++++++++++##+++++++++++++++++++++++++#########+####+###+++++++++++++##################++++#.  ++++++#++++++++++++++++++++++++++++++++++++++++++++++++++++++#########++####+###++++++++++++++#####+############+++++++  ++++++##++++++++++++++++++++++++++++++++++++++++++++++++++++##########++####+###+++++++++++++++#########+########+++++#.
+    </div>
+
+    <header>
+        <h1>ro</h1>
+        <div class="subtitle">san francisco</div>
+        <div class="subtitle">eng @ exa</div>
+        <div class="status">checking status...</div>
+        <div class="bio">
+            programmer, tinkerer. grad cs @ nyu. plt without the t.
+        </div>
+        <div class="reading">currently reading: the great hunt</div>
+    </header>
+
+    <section>
+        <h2>work</h2>
+        
+        <div class="work-item">
+            <div class="item-header">
+                <div>
+                    <div class="item-title"><a href="https://exa.ai" target="_blank">Exa</a></div>
+                    <div class="item-role">swe</div>
+                </div>
+                <div class="item-date">(jun '25 - present)</div>
+            </div>
+            <div class="item-description">
+                building a better way to search the interwebs.
+            </div>
+        </div>
+
+        <div class="work-item">
+            <div class="item-header">
+                <div>
+                    <div class="item-title"><a href="https://perplexity.ai" target="_blank">Perplexity</a></div>
+                    <div class="item-role">resident</div>
+                </div>
+                <div class="item-date">(feb '25 - apr '25')</div>
+            </div>
+            <div class="item-description">
+                full time resident intern, did not break prod.
+            </div>
+        </div>
+
+        <div class="work-item">
+            <div class="item-header">
+                <div>
+                    <div class="item-title"><a href="https://nbcuniversal.com" target="_blank">NBCUniversal</a></div>
+                    <div class="item-role">intern</div>
+                </div>
+                <div class="item-date">(jun '24 - aug '24)</div>
+            </div>
+            <div class="item-description">
+                shipped go services to prod that collect metrics for aws services. improved error handling and fault tolerance. built grafana dashboards and closed jira tickets.
+            </div>
+        </div>
+
+        <div class="work-item">
+            <div class="item-header">
+                <div>
+                    <div class="item-title">[startup]</div>
+                    <div class="item-role">swe</div>
+                </div>
+                <div class="item-date">(aug '21 - jun '23)</div>
+            </div>
+            <div class="item-description">
+                built an e2e coding platform for online interviews. overhauled performance. improved dx with sota dev tooling.
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>projects</h2>
+        
+        <div class="project-item">
+            <div class="item-title"><a href="https://github.com/seatedro/glimpse" target="_blank">glimpse</a></div>
+            <div class="item-description">
+                copy your codebase instantly into clipboard, paste into your LLM's context!
+            </div>
+        </div>
+
+        <div class="project-item">
+            <div class="item-title"><a href="https://github.com/seatedro/glyph" target="_blank">glyph</a></div>
+            <div class="item-description">
+                convert images/video to ascii. save to a file or render on the terminal!
+            </div>
+        </div>
+
+        <div class="project-item">
+            <div class="item-title"><a href="https://memegrep.com" target="_blank">memegrep</a></div>
+            <div class="item-description">
+                the best meme search on earth. caption your memes and save your favorite reactions
+            </div>
+        </div>
+
+        <div class="project-item">
+            <div class="item-title"><a href="https://github.com/seatedro/arxival" target="_blank">arXival</a></div>
+            <div class="item-description">
+                an ML paper answering engine
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>silly stats</h2>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">mouse clicks</div>
+                <div class="stat-value" id="clicks">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">mouse travel</div>
+                <div class="stat-value" id="travel">0px</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">mouse scrolls</div>
+                <div class="stat-value" id="scrolls">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">keypresses</div>
+                <div class="stat-value" id="keys">0</div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const icon = document.getElementById('theme-icon');
+            
+            html.setAttribute('data-theme', newTheme);
+            icon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            
+            // Store preference
+            try {
+                localStorage.setItem('theme', newTheme);
+            } catch (e) {
+                // localStorage might not be available
+            }
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                document.getElementById('theme-icon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            } catch (e) {
+                // Use default light theme
+            }
+        }
+
+        // Stats tracking
+        let clicks = 0;
+        let lastX = 0;
+        let lastY = 0;
+        let travel = 0;
+        let scrolls = 0;
+        let keys = 0;
+
+        document.addEventListener('click', () => {
+            clicks++;
+            document.getElementById('clicks').textContent = clicks.toLocaleString();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (lastX !== 0 && lastY !== 0) {
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                travel += Math.sqrt(dx * dx + dy * dy);
+                document.getElementById('travel').textContent = Math.round(travel).toLocaleString() + 'px';
+            }
+            lastX = e.clientX;
+            lastY = e.clientY;
+        });
+
+        document.addEventListener('wheel', () => {
+            scrolls++;
+            document.getElementById('scrolls').textContent = scrolls.toLocaleString();
+        });
+
+        document.addEventListener('keydown', () => {
+            keys++;
+            document.getElementById('keys').textContent = keys.toLocaleString();
+        });
+
+        // Initialize theme on load
+        loadTheme();
+    </script>
+</body>
+</html>
