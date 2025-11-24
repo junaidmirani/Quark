@@ -933,7 +933,7 @@ export default function LandingPage({ onSignIn }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
+            {/* <div
               style={{
                 width: '42px',
                 height: '42px',
@@ -945,8 +945,8 @@ export default function LandingPage({ onSignIn }) {
                 boxShadow: '0 8px 24px rgba(139, 92, 246, 0.3)',
               }}
             >
-              <Sparkles size={22} color="white" strokeWidth={2.5} />
-            </div>
+             <Sparkles size={22} color="white" strokeWidth={2.5} /> 
+            </div> */}
             <h1
               style={{
                 fontSize: '28px',
