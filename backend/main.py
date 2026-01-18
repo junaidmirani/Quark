@@ -537,7 +537,7 @@ async def debug_gmail_connection(user_id: str):
     """Debug endpoint to test Gmail connection"""
     try:
         # Get user credentials
-        from user_credentials import get_user_credential
+       
         gmail_creds = get_user_credential(user_id, "gmail")
         
         if not gmail_creds:
