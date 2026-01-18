@@ -1,6 +1,11 @@
 import httpx
 from fastapi.responses import RedirectResponse
-from .user_credentials import store_user_credential, get_user_credential, get_user_connected_services
+from .user_credentials import (
+    store_user_credential, 
+    get_user_credential, 
+    get_user_connected_services,
+    user_credentials_db
+)
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -588,7 +593,7 @@ async def debug_gmail_connection(user_id: str):
 @app.get("/debug/credentials")
 async def debug_credentials(current_user: User = Depends(require_auth)):
     """Debug: Show what credentials are stored"""
-    from user_credentials import user_credentials_db, get_user_connected_services
+   
     
     services = get_user_connected_services(current_user.id)
     creds = user_credentials_db.get(current_user.id, {})
