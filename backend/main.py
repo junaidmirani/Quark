@@ -1,6 +1,6 @@
 import httpx
 from fastapi.responses import RedirectResponse
-from user_credentials import store_user_credential, get_user_credential, get_user_connected_services
+from backend.user_credentials import store_user_credential, get_user_credential, get_user_connected_services
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
