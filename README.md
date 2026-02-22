@@ -4,6 +4,9 @@
 
 Quark is a universal search engine that lets you search across Gmail, Google Drive, local files, bookmarks, GitHub, Canva, Notion, Slack, and more—all from a single, lightning-fast interface.
 
+<img width="1366" height="768" alt="Screenshot (834)" src="https://github.com/user-attachments/assets/08b7fc4f-37b5-4088-ae13-3214d645ea92" />
+<img width="1366" height="768" alt="Screenshot (838)" src="https://github.com/user-attachments/assets/2023be44-3c84-4487-935e-680e79ec5014" />
+
 ## Features
 
 - ⚡ **Lightning Fast** - Search results in under 0.4s
